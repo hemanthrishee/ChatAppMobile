@@ -1,14 +1,19 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { TextInput } from 'react-native-gesture-handler'
 import validator from 'validator'
 import { useNavigation } from '@react-navigation/native'
+import Middle from './Middle'
+
+export const SetSignupLogged = createContext()
 
 const Signup = () => {
     const [email, setEmail] = useState('')
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [logged, setLogged] = useState(false)
+    const [un, setUn] = useState("")
     const navigate = useNavigation()
 
 
@@ -40,7 +45,7 @@ const Signup = () => {
             }
             else {
                 setError("")
-                navigate.navigate("Login")
+                setLogged(true)
             }
             setEmail("")
             setPassword("")
@@ -49,25 +54,33 @@ const Signup = () => {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.text}>Signup</Text>
-            <TextInput placeholder='Enter Email' style={styles.input} value={email} onChangeText={txt => {setEmail(txt)}} />
-            <TextInput placeholder='Enter Username' style={styles.input} value={username} onChangeText={txt => {setUsername(txt)}} />
-            <TextInput secureTextEntry={true} placeholder='Enter Password' style={styles.input} value={password} onChangeText={txt => {setPassword(txt)}} />
-            <TouchableOpacity style={styles.btn} onPress={signUpSubmit}>
-                <Text style={styles.btnText}>Sign up</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={{padding: 20}} onPress={()=>{navigate.navigate("Login")}}>
-                <Text>Signed In Already? Proceed to Login</Text>
-            </TouchableOpacity>
-            <Text style={{color: "red"}}>{error}</Text>
-        </View>
+        <SetSignupLogged.Provider value={setLogged}>
+            <View style={styles.superContainer}>
+                {!logged ? <View style={styles.container}>
+                    <Text style={styles.text}>Signup</Text>
+                    <TextInput placeholder='Enter Email' style={styles.input} value={email} onChangeText={txt => {setEmail(txt)}} />
+                    <TextInput placeholder='Enter Username' style={styles.input} value={username} onChangeText={txt => {setUsername(txt); setUn(txt)}} />
+                    <TextInput secureTextEntry={true} placeholder='Enter Password' style={styles.input} value={password} onChangeText={txt => {setPassword(txt)}} />
+                    <TouchableOpacity style={styles.btn} onPress={()=> {signUpSubmit()}}>
+                        <Text style={styles.btnText}>Sign up</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{padding: 20}} onPress={()=>{navigate.navigate("Login")}}>
+                        <Text>Signed In Already? Proceed to Login</Text>
+                    </TouchableOpacity>
+                    <Text style={{color: "red"}}>{error}</Text>
+                </View> : <Middle name={un} />}
+            </View>
+        </SetSignupLogged.Provider>
     )
 }
 
 export default Signup
 
 const styles = StyleSheet.create({
+    superContainer: {
+        flex: 1,
+        justifyContent: 'center'
+    },
     container: {
         flex: 1,
         alignItems: 'center',

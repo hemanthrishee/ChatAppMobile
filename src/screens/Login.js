@@ -1,52 +1,77 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { createContext, useState } from 'react'
 import { TextInput } from 'react-native-gesture-handler'
-import validator from 'validator'
-import { useNavigation } from '@react-navigation/native'
+import { ThemeProvider, useNavigation } from '@react-navigation/native'
+import Middle from './Middle'
+
+export const SetLoggedContext = createContext()
 
 const Login = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [un, setUn] = useState("")
+    const [logged, setLogged] = useState(false)
     const navigate = useNavigation()
 
-    async function loginSubmit() {
-        const response = await fetch("https://chat-app-mern-server.onrender.com/login", {
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({email: email, password: password}),
-            method: "POST"
-        });
-        const data = await response.json();
-        if (data.status === "yeah") {
-            setError("")
-            navigate.navigate("Middle")
+    function validate() {
+        if (email === "" && password === "") {
+            setError("Fill all the fields")
+            return false
         }
-        else {
-            setError("Invalid Email or Password")
+        return true
+    }
+
+    async function loginSubmit() {
+        if (validate()) {
+            const response = await fetch("https://chat-app-mern-server.onrender.com/login", {
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({email: email, password: password}),
+                method: "POST",
+            });
+            const data = await response.json();
+            if (data.status === "yeah") {
+                setError("")
+                setUn(data.name)
+                setLogged(true)
+            }
+            else {
+                setError("Invalid Email or Password")
+            }
+            setEmail("")
+            setPassword("")
         }
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.text}>Login</Text>
-            <TextInput placeholder='Enter Email' style={styles.input} value={email} onChangeText={txt => {setEmail(txt)}} />
-            <TextInput secureTextEntry={true} placeholder='Enter Password' style={styles.input} value={password} onChangeText={txt => {setPassword(txt)}}/>
-            <TouchableOpacity style={styles.btn} onPress={loginSubmit}>
-                <Text style={styles.btnText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={{padding: 20}} onPress={()=>{navigate.navigate("Signup")}}>
-                <Text>Didn't Create an Account already? Proceed to Sign up</Text>
-            </TouchableOpacity>
-            <Text style={{color: "red"}}>{error}</Text>
-        </View>
+        <SetLoggedContext.Provider value={setLogged}>
+            <View style={styles.superContainer}>
+                {!logged ? <View style={styles.container}>
+                    <Text style={styles.text}>Login</Text>
+                    <TextInput placeholder='Enter Email' style={styles.input} value={email} onChangeText={txt => {setEmail(txt)}} />
+                    <TextInput secureTextEntry={true} placeholder='Enter Password' style={styles.input} value={password} onChangeText={txt => {setPassword(txt)}}/>
+                    <TouchableOpacity style={styles.btn} onPress={()=> {loginSubmit()}}>
+                        <Text style={styles.btnText}>Login</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{padding: 20}} onPress={()=>{navigate.navigate("Signup")}}>
+                        <Text>Didn't Create an Account already? Proceed to Sign up</Text>
+                    </TouchableOpacity>
+                    <Text style={{color: "red"}}>{error}</Text>
+                </View>: <Middle name = {un} />}
+            </View>
+        </SetLoggedContext.Provider>
     )
 }
 
 export default Login
 
 const styles = StyleSheet.create({
+    superContainer: {
+        flex: 1,
+        justifyContent: 'center'
+    },
     container: {
         flex: 1,
         alignItems: 'center',
